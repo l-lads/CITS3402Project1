@@ -16,7 +16,12 @@ Completed ✅
 
 ## openmp_sparse_multiplications.c
 ### Description
-TODO
+When testing with Setonix-
+1. Use the shellscript provided with the C file provided
+2. When changing thread count change the:
+    - #SBATCH --cpus-per-task=
+    - Thread count in the c file
+3. Use command squeue -u <username> for checking status of job
 ### Status
-Work in Progress ...
+Virtually Completed ✅
 
