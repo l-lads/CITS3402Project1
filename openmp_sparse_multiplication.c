@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <time.h>
 
-#define SIZE 10000          // Change to 100000 for actual use
+#define SIZE 100000          // Change to 100000 for actual use
 #define PROBABILITY 0.01   // Probability of non-zero entries
 
 // Function to generate a random sparse matrix
@@ -66,19 +66,34 @@ void generate_B_and_C(int** matrix, int size, int*** B, int*** C, int** B_sizes)
 void multiply_sparse_matrices(int** B1, int** C1, int* B1_sizes, int** B2, int** C2, int* B2_sizes, int size, int** result, omp_sched_t schedule_type) {
     omp_set_schedule(schedule_type, 0);
 
-    #pragma omp parallel for schedule(runtime)
-    for (int i = 0; i < size; i++) {
-        for (int k = 0; k < B1_sizes[i]; k++) {
-            int col_B1 = C1[i][k];
-            int val_B1 = B1[i][k];
+    #pragma omp parallel
+    {
+        #pragma omp for schedule(static)
+        for (int i = 0; i < size; i++) {
+            // Temporary local array to accumulate results
+            int* local_result = (int*)calloc(size, sizeof(int));
 
-            for (int j = 0; j < B2_sizes[col_B1]; j++) {
-                int col_B2 = C2[col_B1][j];
-                int val_B2 = B2[col_B1][j];
+            for (int k = 0; k < B1_sizes[i]; k++) {
+                int col_B1 = C1[i][k];
+                int val_B1 = B1[i][k];
 
-                #pragma omp atomic
-                result[i][col_B2] += val_B1 * val_B2;
+                for (int j = 0; j < B2_sizes[col_B1]; j++) {
+                    int col_B2 = C2[col_B1][j];
+                    int val_B2 = B2[col_B1][j];
+
+                    local_result[col_B2] += val_B1 * val_B2;
+                }
             }
+
+            // Combine local results into global result matrix
+            #pragma omp critical
+            {
+                for (int j = 0; j < size; j++) {
+                    result[i][j] += local_result[j];
+                }
+            }
+
+            free(local_result);
         }
     }
 }
@@ -116,15 +131,22 @@ void log_results(const char* filename, int num_threads, const char* schedule_nam
         return;
     }
 
-    fprintf(fp, "Threads: %d\n", num_threads);
-    fprintf(fp, "Schedule: %s\n", schedule_name);
-    fprintf(fp, "Time taken: %f seconds\n", time_taken);
+    fprintf(fp, "Threads:%d\n", num_threads);
+    fprintf(fp, "Schedule:%s\n", schedule_name);
+    fprintf(fp, "Probability:%d\n", PROBABILITY);
+    fprintf(fp, "Time taken:%f seconds\n", time_taken);
 
     fclose(fp);
 }
 
 int main() {
     srand(time(NULL));
+
+    // Create the Results directory if it doesn't exist
+    struct stat st = {0};
+    if (stat("Results", &st) == -1) {
+        mkdir("Results", 0700);
+    }
 
     // Generate two sparse matrices X and Y
     printf("Generating two sparse matrices of size %d with probability %.2f\n", SIZE, PROBABILITY);
@@ -138,6 +160,10 @@ int main() {
     generate_B_and_C(matrix_X, SIZE, &BX, &CX, &BX_sizes);
     generate_B_and_C(matrix_Y, SIZE, &BY, &CY, &CX_sizes);
 
+    // Free the original sparse matrices X and Y
+    free_matrix(matrix_X, SIZE);
+    free_matrix(matrix_Y, SIZE);
+
     // Allocate memory for the result matrix
     int** result = (int**)malloc(SIZE * sizeof(int*));
     for (int i = 0; i < SIZE; i++) {
@@ -145,11 +171,11 @@ int main() {
     }
 
     // Choose specific thread count and scheduling type
-    int num_threads = 8; // Example: 8 threads
-    omp_sched_t schedule_type = omp_sched_static; // Example: static scheduling
+    int num_threads = 8; // Set number of threads
+    omp_sched_t schedule_type = omp_sched_static; // Set scheduling type to static
     const char* schedule_name = "static"; // Name of scheduling type
 
-    omp_set_num_threads(num_threads);
+    omp_set_num_threads(num_threads); // Set number of threads for OpenMP
     double start_time = omp_get_wtime();
 
     multiply_sparse_matrices(BX, CX, BX_sizes, BY, CY, CX_sizes, SIZE, result, schedule_type);
@@ -167,8 +193,6 @@ int main() {
     write_to_file("FileC.txt", CX, CX_sizes, SIZE);
 
     // Free allocated memory
-    free_matrix(matrix_X, SIZE);
-    free_matrix(matrix_Y, SIZE);
     free_matrix(BX, SIZE);
     free_matrix(CX, SIZE);
     free_matrix(BY, SIZE);

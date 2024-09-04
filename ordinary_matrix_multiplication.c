@@ -49,16 +49,16 @@ int main() {
 
     // Print matrices
     printf("Matrix A:\n");
-    printMatrix(A);
+    //printMatrix(A);
 
     printf("\nMatrix B:\n");
-    printMatrix(B);
+    //printMatrix(B);
 
     // Multiply matrices
     multiplyMatrices(A, B, C);
 
     // Print result matrix
     printf("\nResult Matrix C = A * B:\n");
-    printMatrix(C);
+    //printMatrix(C);
     return 0;
 }
