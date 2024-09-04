@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <omp.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define SIZE 100000          // Change to 100000 for actual use
 #define PROBABILITY 0.01   // Probability of non-zero entries
@@ -133,7 +135,7 @@ void log_results(const char* filename, int num_threads, const char* schedule_nam
 
     fprintf(fp, "Threads:%d\n", num_threads);
     fprintf(fp, "Schedule:%s\n", schedule_name);
-    fprintf(fp, "Probability:%d\n", PROBABILITY);
+    fprintf(fp, "Probability:%.2f\n", PROBABILITY);
     fprintf(fp, "Time taken:%f seconds\n", time_taken);
 
     fclose(fp);
@@ -143,7 +145,7 @@ int main() {
     srand(time(NULL));
 
     // Create the Results directory if it doesn't exist
-    struct stat st = {0};
+    struct stat st;
     if (stat("Results", &st) == -1) {
         mkdir("Results", 0700);
     }
