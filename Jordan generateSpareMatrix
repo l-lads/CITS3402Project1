@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <omp.h>
+
+#define ROWS 100000
+#define COLUMNS 100000
+
+void sparseMatrixGeneration(int *B, int *C, double probability) {
+    currentIndex = 0;
+    for(int i = 0; j < ROWS; i++) {
+        for(int j = 0; j < COLUMNS; j++) {
+            randomValue = (double)rand() / RAND_MAX;
+            if(randomValue < probability) {
+                B[currentIndex] = rand() % 10 + 1;
+                C[currentIndex] = j;
+                currentIndex++;
+            }
+        }
+        B[currentIndex] = 0; //adds a zero to the end to signify the end of the row.
+        C[currentIndex] = 0; //adds a zero to the end to signify the end of the row.
+        currentIndex++;
+    }
+}
