@@ -2,11 +2,15 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=32
 #SBATCH --partition=work
 #SBATCH --account=courses0101
-#SBATCH --mem=200G
-#SBATCH --time=00:05:00
+#SBATCH --mem=220G
+#SBATCH --time=01:30:00
 
+# Compile the program
 gcc openmp_sparse_multiplication.c -o openmp_sparse_multiplication -O2 -fopenmp
-srun openmp_sparse_multiplication
+
+# Run the program with different parameters on different tasks
+# ./openmp_sparse_multiplication <matrix_size> <schedule from {static, dynamic, guided, auto}> <probability from {0.01, 0.02, 0.05}> <thread count>
+srun ./openmp_sparse_multiplication 100000 guided 0.01 32
