@@ -117,7 +117,7 @@ void multiply_sparse_matrices(int** B1, int** C1, int* B1_sizes, int** B2, int**
     {
         #pragma omp for schedule(runtime)
         for (int i = 0; i < size; i++) {
-            printf("Thread %d is executing\n", omp_get_thread_num());
+            //printf("Thread %d is executing\n", omp_get_thread_num());
 
             // Temporary local array to accumulate results
             int* local_result = (int*)calloc(size, sizeof(int));
@@ -198,7 +198,7 @@ void create_directories(const char* size_dir) {
     }
 
     // Create subdirectories within the main directory
-    char sub_dirs[4][20] = {"guided", "static", "dynamic", "runtime"};
+    char sub_dirs[4][20] = {"guided", "static", "dynamic", "auto"};
     for (int i = 0; i < 4; i++) {
         char dir_path[256];
         snprintf(dir_path, sizeof(dir_path), "%s/%s", size_dir, sub_dirs[i]);
